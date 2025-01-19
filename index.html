@@ -11,11 +11,19 @@
             background-color: #f9fafb;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
+            padding: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .comment:hover {
+            background-color: #f1f5f9;
         }
 
         .reply {
             background-color: #f3f4f6;
             border-left: 3px solid #3b82f6;
+            margin-left: 1rem;
+            padding-left: 1rem;
         }
 
         .avatar {
@@ -23,30 +31,100 @@
             height: 40px;
             border-radius: 50%;
             object-fit: cover;
+            background-color: #3b82f6;
         }
 
         .timestamp {
             font-size: 0.75rem;
             color: #9ca3af;
         }
+
+        .action-buttons button {
+            transition: all 0.3s ease;
+        }
+
+        .action-buttons button:hover {
+            opacity: 0.8;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .reply-box {
+            margin-top: 10px;
+        }
+
+        .bg-primary {
+            background-color: #3b82f6;
+        }
+
+        .bg-primary-dark {
+            background-color: #2563eb;
+        }
+
+        .bg-green-light {
+            background-color: #10b981;
+        }
+
+        .bg-green-dark {
+            background-color: #16a34a;
+        }
+
+        .bg-red-light {
+            background-color: #f87171;
+        }
+
+        .bg-red-dark {
+            background-color: #dc2626;
+        }
+
+        .bg-gray-light {
+            background-color: #f3f4f6;
+        }
+
+        .loading {
+            width: 25px;
+            height: 25px;
+            border: 4px solid transparent;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
-<body class="bg-gray-100 p-4">
-    <div class="max-w-2xl mx-auto">
-        <h1 class="text-2xl font-bold text-center mb-4">Nested Comment Section</h1>
+<body class="bg-gray-100 p-6 font-sans">
+    <div class="max-w-3xl mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-3xl font-semibold text-center text-gray-800 mb-6">Nested Comment Section</h1>
 
         <div id="commentContainer" class="space-y-4">
         </div>
-        <div class="mt-6">
-            <input type="text" id="username" class="w-full p-2 border rounded mb-2"
-                placeholder="Enter your username">
-            <textarea id="newComment" class="w-full p-2 border rounded" rows="3" placeholder="Add a comment..."
+
+        <div class="mt-8">
+            <input type="text" id="username" class="w-full p-3 border rounded mb-4" placeholder="Enter your username">
+            <textarea id="newComment" class="w-full p-3 border rounded" rows="4" placeholder="Add a comment..."
                 maxlength="250"></textarea>
             <div class="flex justify-between items-center mt-2">
                 <small id="charCounter" class="text-gray-500">0 / 250</small>
-                <button onclick="addComment()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Post
-                    Comment</button>
+                <button onclick="addComment()"
+                    class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary-dark focus:outline-none">
+                    Post Comment
+                </button>
+                <div id="loadingIndicator" class="hidden">
+                    <div class="loading"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -56,38 +134,47 @@
         const newComment = document.getElementById('newComment');
         const charCounter = document.getElementById('charCounter');
         const usernameInput = document.getElementById('username');
+        const loadingIndicator = document.getElementById('loadingIndicator');
 
         newComment.addEventListener('input', () => {
             charCounter.textContent = `${newComment.value.length} / 250`;
         });
+
+        searchInput.addEventListener('input', searchComments);
+
+        
 
         function addComment() {
             const commentText = newComment.value.trim();
             const username = usernameInput.value.trim() || "Anonymous";
             if (commentText === '') return alert('Comment cannot be empty!');
 
-            const comment = createCommentElement(commentText, username);
-            commentContainer.appendChild(comment);
-            newComment.value = '';
-            usernameInput.value = '';
-            charCounter.textContent = '0 / 250';
+            loadingIndicator.classList.remove('hidden');
+            setTimeout(() => {
+                const comment = createCommentElement(commentText, username);
+                commentContainer.appendChild(comment);
+                newComment.value = '';
+                usernameInput.value = '';
+                charCounter.textContent = '0 / 250';
+                loadingIndicator.classList.add('hidden');
+            }, 1000); // Simulating loading
         }
 
         function createCommentElement(text, username, isReply = false) {
             const comment = document.createElement('div');
             const timestamp = new Date().toLocaleString();
-            comment.className = isReply ? 'reply p-4 space-y-2' : 'comment p-4 space-y-2';
+            comment.className = isReply ? 'reply' : 'comment';
             comment.innerHTML = `
                 <div class="flex items-start space-x-4">
                     <img src="./dinosaur.png" alt="Avatar" class="avatar">
                     <div class="flex-1">
-                        <h3 class="user  font-semibold">${username}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">${username}</h3>
                         <p class="text-gray-800">${text}</p>
-                        <span class="timestamp">${timestamp}</span>
-                        <div class="flex space-x-2 mt-2">
+                        <span class="timestamp text-gray-500">${timestamp}</span>
+                        <div class="action-buttons mt-2">
                             <button class="text-blue-500 text-sm" onclick="showReplyBox(this)">Reply</button>
-                            <button class="text-green-500 text-sm" onclick="editComment(this)">Edit</button>
-                            <button class="text-red-500 text-sm" onclick="deleteComment(this)">Delete</button>
+                            <button class=" text-sm" onclick="editComment(this)">Edit</button>
+                            <button class="text-red-light text-sm" onclick="deleteComment(this)">Delete</button>
                             <button class="text-gray-500 text-sm" onclick="toggleLikes(this)">👍 Like</button>
                             <span class="likes-count text-gray-500">0</span>
                         </div>
@@ -102,12 +189,12 @@
             const replyContainer = button.parentElement.nextElementSibling;
             if (!replyContainer.querySelector('textarea')) {
                 const replyBox = document.createElement('div');
-                replyBox.className = 'reply-box mt-2';
+                replyBox.className = 'reply-box';
                 replyBox.innerHTML = `
-                    <textarea class="w-full p-2 border rounded" rows="2" placeholder="Write a reply..." maxlength="250"></textarea>
+                    <textarea class="w-full p-3 border rounded" rows="3" placeholder="Write a reply..." maxlength="250"></textarea>
                     <div class="flex justify-between items-center mt-2">
                         <small class="text-gray-500">0 / 250</small>
-                        <button class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600" onclick="addReply(this)">Post Reply</button>
+                        <button class="px-6 py-3 bg-green-light text-white rounded-lg hover:bg-green-dark" onclick="addReply(this)">Post Reply</button>
                     </div>
                 `;
                 replyContainer.appendChild(replyBox);
@@ -138,82 +225,47 @@
             replyBox.querySelector('small').textContent = '0 / 250';
         }
 
-
-        function toggleReply(button) {
-        const replyBox = button.parentElement.parentElement;  
-        const textarea = replyBox.querySelector('textarea');
-        const replyText = textarea ? textarea.value.trim() : '';
-
-        const existingTextarea = replyBox.querySelector('textarea');
-
-        if (!existingTextarea) {
-            const textarea = document.createElement('textarea');
-            replyBox.appendChild(textarea);  
-            button.textContent = 'Submit';  
-        } else {
-            if (replyText === '') {
-                replyBox.remove();
-            } else {
-                const username = usernameInput.value.trim() || "Anonymous";
-                const reply = createCommentElement(replyText, username, true);  
-
-                const replyContainer = replyBox.parentElement;
-                replyContainer.insertBefore(reply, replyBox);
-
-                textarea.value = '';
-                replyBox.querySelector('small').textContent = '0 / 250';
-                replyBox.remove();  
-            }
-        }
-    }
-
-
-        
         function editComment(button) {
-                const commentDiv = button.closest('.comment, .reply'); 
-                const commentText = commentDiv.querySelector('p'); 
-                const currentText = commentText.textContent;
+            const commentDiv = button.closest('.comment, .reply');
+            const commentText = commentDiv.querySelector('p');
+            const currentText = commentText.textContent;
 
-                
-                if (commentText.querySelector('textarea')) return;
+            if (commentText.querySelector('textarea')) return;
 
-            
-                const textarea = document.createElement('textarea');
-                textarea.className = 'w-full p-2 border rounded';
-                textarea.rows = 2;
-                textarea.value = currentText;
+            const textarea = document.createElement('textarea');
+            textarea.className = 'w-full p-3 border rounded';
+            textarea.rows = 2;
+            textarea.value = currentText;
 
-                
-                commentText.textContent = ''; 
-                commentText.appendChild(textarea);
+            commentText.textContent = '';
+            commentText.appendChild(textarea);
 
-                const actionContainer = document.createElement('div');
-                actionContainer.className = 'flex space-x-2 mt-2';
+            const actionContainer = document.createElement('div');
+            actionContainer.className = 'flex space-x-2 mt-2';
 
-                const saveButton = document.createElement('button');
-                saveButton.textContent = 'Save';
-                saveButton.className = 'px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600';
-                saveButton.onclick = () => {
-                    const newText = textarea.value.trim();
-                    if (newText === '') {
-                        alert('Comment cannot be empty!');
-                    } else {
-                        commentText.textContent = newText; 
-                    }
-                };
+            const saveButton = document.createElement('button');
+            saveButton.textContent = 'Save';
+            saveButton.className = 'px-6 py-3 bg-green-light text-white rounded-lg hover:bg-green-dark';
+            saveButton.onclick = () => {
+                const newText = textarea.value.trim();
+                if (newText === '') {
+                    alert('Comment cannot be empty!');
+                } else {
+                    commentText.textContent = newText;
+                }
+            };
 
-                const cancelButton = document.createElement('button');
-                cancelButton.textContent = 'Cancel';
-                cancelButton.className = 'px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400';
-                cancelButton.onclick = () => {
-                    commentText.textContent = currentText; 
-                };
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = 'Cancel';
+            cancelButton.className = 'px-6 py-3 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400';
+            cancelButton.onclick = () => {
+                commentText.textContent = currentText;
+            };
 
-                actionContainer.appendChild(saveButton);
-                actionContainer.appendChild(cancelButton);
-                commentText.appendChild(actionContainer);
-            }
-
+            actionContainer.appendChild(saveButton);
+            actionContainer.appendChild(cancelButton);
+            commentText.appendChild(actionContainer);
+        }
 
         function deleteComment(button) {
             const comment = button.closest('.comment, .reply');
@@ -221,10 +273,22 @@
         }
 
         function toggleLikes(button) {
-            const likeCountSpan = button.nextElementSibling;
-            let likeCount = parseInt(likeCountSpan.textContent);
-            likeCountSpan.textContent = likeCount + 1;
-        }
+                const likeCountSpan = button.nextElementSibling;
+                let likeCount = parseInt(likeCountSpan.textContent);
+
+                if (button.classList.contains('liked')) {
+                    likeCount -= 1;
+                    button.classList.remove('liked');
+                    button.textContent = '👍 Like';
+                } else {
+                    likeCount += 1;
+                    button.classList.add('liked');
+                    button.textContent = '👎 Unlike';
+                }
+
+                likeCountSpan.textContent = likeCount;
+            }
+
     </script>
 </body>
 
